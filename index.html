@@ -228,7 +228,7 @@
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                         </svg>
-                        Download Asset
+                        Export JPG
                     </button>
                     <button id="reset-btn" class="wp-button-outline">
                         Discard
@@ -278,7 +278,6 @@
             targetW = 300;
             targetH = mode === 'photo' ? 300 : 80;
 
-            // Update UI container and overlay
             canvasContainer.style.width = targetW + 'px';
             canvasContainer.style.height = targetH + 'px';
             cropOverlay.style.width = targetW + 'px';
@@ -287,13 +286,12 @@
             mainCanvas.height = targetH;
 
             if (img.src) {
-                // Re-calculate zoom and position for the new mode
                 const scaleW = targetW / img.width;
                 const scaleH = targetH / img.height;
                 currentZoom = Math.max(scaleW, scaleH);
                 
                 zoomSlider.min = currentZoom * 0.5;
-                zoomSlider.max = currentZoom * 5;
+                zoomSlider.max = currentZoom * 10; // Increased max zoom for more flexibility
                 zoomSlider.value = currentZoom;
                 
                 imgX = (targetW - img.width * currentZoom) / 2;
@@ -304,7 +302,6 @@
             }
         }
 
-        // Initialize with default mode
         setMode('photo');
 
         uploadArea.onclick = () => fileInput.click();
@@ -318,7 +315,7 @@
             const reader = new FileReader();
             reader.onload = (event) => {
                 img.onload = () => {
-                    setMode(currentMode); // Reset view to image
+                    setMode(currentMode);
                     uploadArea.classList.add('hidden');
                     editorSection.classList.remove('hidden');
                 };
@@ -334,7 +331,8 @@
         }
 
         function draw() {
-            ctx.fillStyle = '#fff';
+            // JPG doesn't support transparency, so we fill background with white
+            ctx.fillStyle = '#ffffff';
             ctx.fillRect(0, 0, targetW, targetH);
             ctx.drawImage(img, imgX, imgY, img.width * currentZoom, img.height * currentZoom);
         }
@@ -380,7 +378,7 @@
         window.addEventListener('mousemove', move);
         window.addEventListener('mouseup', () => isDragging = false);
         mainCanvas.addEventListener('touchstart', startMove);
-        window.addEventListener('touchmove', move);
+        window.addEventListener('touchmove', move, { passive: false });
         window.addEventListener('touchend', () => isDragging = false);
 
         resetBtn.onclick = () => {
@@ -392,11 +390,12 @@
         downloadBtn.onclick = () => {
             const link = document.createElement('a');
             const suffix = currentMode === 'photo' ? '300x300' : '300x80';
-            link.download = `sd_asset_${suffix}_${Date.now()}.png`;
-            link.href = mainCanvas.toDataURL('image/png', 1.0);
+            link.download = `sd_asset_${suffix}_${Date.now()}.jpg`;
+            // Exporting as JPG with 0.92 quality (balanced file size and clarity)
+            link.href = mainCanvas.toDataURL('image/jpeg', 0.92);
             link.click();
             
-            statusMsg.textContent = `${currentMode.toUpperCase()} Exported`;
+            statusMsg.textContent = `${currentMode.toUpperCase()} JPG Exported`;
             statusMsg.className = 'mt-6 p-4 rounded text-center text-xs font-bold uppercase tracking-widest bg-green-50 text-green-700 block';
             setTimeout(() => statusMsg.classList.add('hidden'), 3000);
         };
