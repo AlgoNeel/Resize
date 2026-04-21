@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <title>Asset Creator | Tools by Swapneel Das</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,200..900;1,8..60,200..900&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --wp-admin-blue: #2271b1;
+            --wp-dark: #1d2327;
+            --wp-border: #dcdcde;
+            --wp-light-grey: #f0f0f1;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            color: #2c3338;
+            background-color: #ffffff;
+            line-height: 1.6;
+        }
+
+        h1, h2 {
+            font-family: 'Source Serif 4', serif;
+            color: var(--wp-dark);
+            letter-spacing: -0.01em;
+        }
+
+        .hero-gradient {
+            background: radial-gradient(circle at 10% 20%, rgba(34, 113, 177, 0.03) 0%, rgba(255, 255, 255, 1) 90%);
+        }
+
+        .wp-block-card {
+            background: #fff;
+            border: 1px solid var(--wp-border);
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .wp-button-primary {
+            background-color: var(--wp-dark);
+            color: #fff;
+            padding: 12px 28px;
+            border-radius: 4px;
+            font-weight: 600;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .wp-button-primary:hover {
+            background-color: #000;
+            transform: translateY(-1px);
+        }
+
+        .wp-button-outline {
+            border: 2px solid var(--wp-dark);
+            color: var(--wp-dark);
+            padding: 10px 26px;
+            border-radius: 4px;
+            font-weight: 600;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #canvas-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f8f9fa;
+            border-radius: 4px;
+            min-height: 340px;
+        }
+
+        #canvas-container {
+            position: relative;
+            cursor: move;
+            touch-action: none;
+            overflow: hidden;
+            border: 1px solid var(--wp-border);
+            background: #000;
+            border-radius: 2px;
+        }
+
+        .crop-overlay-static {
+            position: absolute;
+            top: 0;
+            left: 0;
+            border: 2px solid var(--wp-admin-blue);
+            box-shadow: 0 0 0 9999px rgba(255, 255, 255, 0.7);
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(15px);
+            transition: all 0.5s ease-out;
+        }
+
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Mode Toggle Styling */
+        .mode-toggle {
+            display: flex;
+            background: var(--wp-light-grey);
+            padding: 4px;
+            border-radius: 8px;
+            gap: 4px;
+        }
+
+        .mode-btn {
+            flex: 1;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: all 0.2s;
+        }
+
+        .mode-btn.active {
+            background: white;
+            color: var(--wp-admin-blue);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 18px;
+            width: 18px;
+            border-radius: 50%;
+            background: var(--wp-admin-blue);
+            cursor: pointer;
+            margin-top: -6px;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 6px;
+            background: var(--wp-light-grey);
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="min-h-screen hero-gradient flex flex-col">
+
+    <!-- Brand Header -->
+    <nav class="border-b border-slate-100 bg-white/80 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+            <a href="#" class="text-lg font-bold tracking-tight text-slate-900 uppercase">
+                SWAPNEEL <span class="text-blue-600">DAS</span>
+            </a>
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-100 px-2 py-1 rounded">Creator Tool</span>
+        </div>
+    </nav>
+
+    <main class="flex-grow flex items-center justify-center p-6">
+        <div class="max-w-xl w-full">
+            <div class="reveal active mb-8 text-center">
+                <h1 class="text-3xl md:text-4xl font-bold mb-2">Asset Creator</h1>
+                <p class="text-slate-500 text-sm">Professional scaling for Photos and Signs.</p>
+            </div>
+
+            <!-- Mode Selector -->
+            <div class="reveal active mb-6 max-w-xs mx-auto">
+                <div class="mode-toggle">
+                    <button id="btn-photo" class="mode-btn active" onclick="setMode('photo')">Photo (300x300)</button>
+                    <button id="btn-sign" class="mode-btn" onclick="setMode('sign')">Sign (300x80)</button>
+                </div>
+            </div>
+
+            <!-- Upload Area -->
+            <div id="upload-area" class="wp-block-card p-12 text-center hover:border-blue-400 cursor-pointer transition-all group reveal active">
+                <input type="file" id="file-input" accept="image/*" class="hidden">
+                <div class="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold mb-1">Upload Image</h3>
+                <p class="text-slate-500 text-sm">Standard or Wide images accepted</p>
+            </div>
+
+            <!-- Editor UI -->
+            <div id="editor-section" class="hidden space-y-6 reveal active">
+                <div class="wp-block-card p-4 overflow-hidden">
+                    <div id="canvas-wrapper">
+                        <div id="canvas-container">
+                            <canvas id="main-canvas"></canvas>
+                            <div id="crop-overlay" class="crop-overlay-static"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="wp-block-card p-6 space-y-5">
+                    <div>
+                        <div class="flex justify-between items-end mb-3">
+                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Adjust Zoom</label>
+                            <span id="zoom-percent" class="text-xs font-bold text-blue-600">100%</span>
+                        </div>
+                        <input type="range" id="zoom-slider" min="0.1" max="3" step="0.01" value="1" class="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer">
+                    </div>
+
+                    <div class="flex items-start gap-3 p-3 bg-slate-50 rounded border-l-2 border-blue-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <p class="text-xs text-slate-600 leading-relaxed italic">Drag the image to center the subject inside the frame.</p>
+                    </div>
+                </div>
+
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <button id="download-btn" class="wp-button-primary flex-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        Download Asset
+                    </button>
+                    <button id="reset-btn" class="wp-button-outline">
+                        Discard
+                    </button>
+                </div>
+            </div>
+
+            <div id="status-msg" class="mt-6 hidden p-4 rounded text-center text-xs font-bold uppercase tracking-widest"></div>
+        </div>
+    </main>
+
+    <footer class="py-8 text-center border-t border-slate-100 bg-white">
+        <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest">© 2026 Swapneel Das • Digital Craftsmanship</p>
+    </footer>
+
+    <script>
+        const fileInput = document.getElementById('file-input');
+        const uploadArea = document.getElementById('upload-area');
+        const editorSection = document.getElementById('editor-section');
+        const mainCanvas = document.getElementById('main-canvas');
+        const cropOverlay = document.getElementById('crop-overlay');
+        const canvasContainer = document.getElementById('canvas-container');
+        const zoomSlider = document.getElementById('zoom-slider');
+        const zoomPercent = document.getElementById('zoom-percent');
+        const downloadBtn = document.getElementById('download-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const statusMsg = document.getElementById('status-msg');
+
+        const ctx = mainCanvas.getContext('2d');
+        
+        let currentMode = 'photo'; // 'photo' or 'sign'
+        let targetW = 300;
+        let targetH = 300;
+
+        let img = new Image();
+        let imgX = 0;
+        let imgY = 0;
+        let currentZoom = 1;
+        let isDragging = false;
+        let lastX, lastY;
+
+        function setMode(mode) {
+            currentMode = mode;
+            document.getElementById('btn-photo').classList.toggle('active', mode === 'photo');
+            document.getElementById('btn-sign').classList.toggle('active', mode === 'sign');
+            
+            targetW = 300;
+            targetH = mode === 'photo' ? 300 : 80;
+
+            // Update UI container and overlay
+            canvasContainer.style.width = targetW + 'px';
+            canvasContainer.style.height = targetH + 'px';
+            cropOverlay.style.width = targetW + 'px';
+            cropOverlay.style.height = targetH + 'px';
+            mainCanvas.width = targetW;
+            mainCanvas.height = targetH;
+
+            if (img.src) {
+                // Re-calculate zoom and position for the new mode
+                const scaleW = targetW / img.width;
+                const scaleH = targetH / img.height;
+                currentZoom = Math.max(scaleW, scaleH);
+                
+                zoomSlider.min = currentZoom * 0.5;
+                zoomSlider.max = currentZoom * 5;
+                zoomSlider.value = currentZoom;
+                
+                imgX = (targetW - img.width * currentZoom) / 2;
+                imgY = (targetH - img.height * currentZoom) / 2;
+                
+                updateZoomLabel();
+                draw();
+            }
+        }
+
+        // Initialize with default mode
+        setMode('photo');
+
+        uploadArea.onclick = () => fileInput.click();
+        
+        fileInput.onchange = (e) => {
+            const file = e.target.files[0];
+            if (file) handleFile(file);
+        };
+
+        function handleFile(file) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                img.onload = () => {
+                    setMode(currentMode); // Reset view to image
+                    uploadArea.classList.add('hidden');
+                    editorSection.classList.remove('hidden');
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function updateZoomLabel() {
+            const baseScale = targetW / img.width;
+            const percent = Math.round((currentZoom / baseScale) * 100);
+            zoomPercent.textContent = `${percent}%`;
+        }
+
+        function draw() {
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(0, 0, targetW, targetH);
+            ctx.drawImage(img, imgX, imgY, img.width * currentZoom, img.height * currentZoom);
+        }
+
+        function applyZoom(newZoom, centerX, centerY) {
+            const oldZoom = currentZoom;
+            imgX = centerX - (centerX - imgX) * (newZoom / oldZoom);
+            imgY = centerY - (centerY - imgY) * (newZoom / oldZoom);
+            currentZoom = newZoom;
+            zoomSlider.value = newZoom;
+            updateZoomLabel();
+            draw();
+        }
+
+        zoomSlider.oninput = (e) => applyZoom(parseFloat(e.target.value), targetW/2, targetH/2);
+
+        mainCanvas.onwheel = (e) => {
+            e.preventDefault();
+            const delta = e.deltaY > 0 ? 0.95 : 1.05;
+            const nextZoom = Math.min(Math.max(zoomSlider.min, currentZoom * delta), zoomSlider.max);
+            const rect = mainCanvas.getBoundingClientRect();
+            applyZoom(nextZoom, e.clientX - rect.left, e.clientY - rect.top);
+        };
+
+        const startMove = (e) => {
+            isDragging = true;
+            lastX = e.touches ? e.touches[0].clientX : e.clientX;
+            lastY = e.touches ? e.touches[0].clientY : e.clientY;
+        };
+
+        const move = (e) => {
+            if (!isDragging) return;
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            imgX += clientX - lastX;
+            imgY += clientY - lastY;
+            lastX = clientX;
+            lastY = clientY;
+            draw();
+        };
+
+        mainCanvas.addEventListener('mousedown', startMove);
+        window.addEventListener('mousemove', move);
+        window.addEventListener('mouseup', () => isDragging = false);
+        mainCanvas.addEventListener('touchstart', startMove);
+        window.addEventListener('touchmove', move);
+        window.addEventListener('touchend', () => isDragging = false);
+
+        resetBtn.onclick = () => {
+            editorSection.classList.add('hidden');
+            uploadArea.classList.remove('hidden');
+            fileInput.value = '';
+        };
+
+        downloadBtn.onclick = () => {
+            const link = document.createElement('a');
+            const suffix = currentMode === 'photo' ? '300x300' : '300x80';
+            link.download = `sd_asset_${suffix}_${Date.now()}.png`;
+            link.href = mainCanvas.toDataURL('image/png', 1.0);
+            link.click();
+            
+            statusMsg.textContent = `${currentMode.toUpperCase()} Exported`;
+            statusMsg.className = 'mt-6 p-4 rounded text-center text-xs font-bold uppercase tracking-widest bg-green-50 text-green-700 block';
+            setTimeout(() => statusMsg.classList.add('hidden'), 3000);
+        };
+    </script>
+</body>
+</html>
